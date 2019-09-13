@@ -1,7 +1,7 @@
 library(ggplot2)
 pd = 0.4
-rho = 0.001
-x <- seq(0,1,by=0.001)
+rho = 0.0001
+x <- seq(0,1,by=0.0001)
 x <- x[2:(length(x)-1)]
 x[1]<-0.00001
 x[length(x)]<-(1-x[1])
