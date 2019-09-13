@@ -1,6 +1,6 @@
 library(ggplot2)
-pd = 0.25
-rho = 0.9999
+pd = 0.4
+rho = 0.001
 x <- seq(0,1,by=0.001)
 x <- x[2:(length(x)-1)]
 x[1]<-0.00001
@@ -14,7 +14,7 @@ t <- sqrt((1-rho)/rho)*exp( -1/(2*rho)*(sqrt(1-rho)*qnorm(x)-qnorm(pd))^2+0.5*qn
 print(sqrt((1-rho)/rho)*exp( -1/(2*rho)*(sqrt(1-rho)*qnorm(x[1])-qnorm(pd))^2+0.5*qnorm(x[1])^2))
 vfun <- function(x){
   pd = 0.25
-  rho = 0.8
+  rho = 0.05
   t <- sqrt((1-rho)/rho)*exp( -1/(2*rho)*(sqrt(1-rho)*qnorm(x)-qnorm(pd))^2+0.5*qnorm(x)^2)
   return(t)
 }
@@ -24,10 +24,24 @@ area <- integrate(vfun,x[1],x[length(x)])$value
 #Putting results into a dataframe
 vas <- data.frame(x,x_norm,c,t)
 
+
+plot(x*length(x),t,type = 'l')
+u=pd*length(x)
+sdu = sqrt(pd*length(x)*(1-pd))
+
+n_data <-  dnorm(x*length(x),mean = u,sd=sdu)
+lines(x*length(x),n_data)
+plot(x*length(x),n_data,type='l')
+
+
+
+
 #Plot cummulative distribution
 plot(x,c,type = 'l',ylim = c(0,1))
 lines(x,p)
-plot(x,t,type = 'l')
+n_data <-  pnorm(x*length(x),mean = u,sd=sdu)
+lines(x,n_data,col='red')
+
 
 
 
