@@ -14,7 +14,6 @@ library(ggplot2)
 
 #Probability of default
 pd = 0.2
-#Portfolio correlation
 rho = 0.2
 
 #Make a sequence of portfolio loan loss x = amount defaulted loan/total number of loan
@@ -52,31 +51,27 @@ plot(x,c,type ='l')
 plot(x,t,type ='l')
 
 
-#Test 
-#X_i = Sqrt(rho)*S
-n = 4000
+#Simulate portfoilo loss
 
-port_loss_model <- function(n,rho,pd){
+
+sim_port_loss <- function(n,number_of_years,pd,rho){
   loss_lim <- qnorm(pd)
-  systematic_factor <- rep(rnorm(1),n)
-  idiosyncratic_factor <- rnorm(n)  
+  systematic_factor <-matrix(rep(rnorm(number_of_years),each=n) ,nrow=n)
+  idiosyncratic_factor <- matrix(rnorm(n*number_of_years),nrow=n,ncol=number_of_years)  
   firm_value <- sqrt(rho)*systematic_factor+sqrt(1-rho)*idiosyncratic_factor
-  X <- firm_value<loss_lim
-  port_loss = sum(X)/length(X)
+  sim_port_loss = colSums(firm_value<loss_lim)/n
 }
 
-number_of_years = 8000
-x_sim <- rep(0,number_of_years)
-for (i in seq(1,number_of_years)){
-  x_sim[i]=port_loss_model(n,rho,pd)
-}
-#hist(x_sim,xlab='x',xlim=c(0,median(t)) )
-hist(x_sim,xlab='x')
+
+n=1500
+number_of_years= 20000
+x_sim <- sim_port_loss(n,number_of_years,pd,rho)
+
+hist(x_sim)
 par(new=T)
-plot(x,t,type='l',col='red',ylab='',xlab='', xaxt = "n",yaxt = "n")
+plot(x,t,type='l',col='blue',ylab='',xlab='', xaxt = "n",yaxt = "n")
 legend("topright",legend=c('Simulated loan loss','Teoretical loan loss'),
        col = c("black", "red"), lty = c(1, 2))
-
 
 
 
