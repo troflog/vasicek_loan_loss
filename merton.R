@@ -1,46 +1,83 @@
 library(ggplot2)
-pd = 0.4
-rho = 0.0001
+
+###########################################################################
+###########################################################################
+###                                                                     ###
+###             VASICEK PORTFOLIO LOSS MODEL                            ###  
+###                                                                     ###
+###########################################################################
+###########################################################################
+
+# This program plots both the density and the cumulative portfolio loan loss distribution
+#http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.139.5752&rep=rep1&type=pdf
+
+
+#Probability of default
+pd = 0.2
+#Portfolio correlation
+rho = 0.2
+
+#Make a sequence of portfolio loan loss x = amount defaulted loan/total number of loan
 x <- seq(0,1,by=0.0001)
 x <- x[2:(length(x)-1)]
 x[1]<-0.00001
 x[length(x)]<-(1-x[1])
+
+#Vector with pds
 p <- rep(1-pd,length(x))
-x_norm <- x/n
-#Loan loss cummulative distribution
-c <- pnorm((sqrt(1-rho)* qnorm(x)-qnorm(pd))/sqrt(rho))
-#Densisty of loan loss distribution
-t <- sqrt((1-rho)/rho)*exp( -1/(2*rho)*(sqrt(1-rho)*qnorm(x)-qnorm(pd))^2+0.5*qnorm(x)^2)
-print(sqrt((1-rho)/rho)*exp( -1/(2*rho)*(sqrt(1-rho)*qnorm(x[1])-qnorm(pd))^2+0.5*qnorm(x[1])^2))
-vfun <- function(x){
-  pd = 0.25
-  rho = 0.05
-  t <- sqrt((1-rho)/rho)*exp( -1/(2*rho)*(sqrt(1-rho)*qnorm(x)-qnorm(pd))^2+0.5*qnorm(x)^2)
-  return(t)
+
+#Portfolio loan loss x cummulative distribution
+portfolio_loss_cum <- function(x,pd,rho){
+        c <- pnorm((sqrt(1-rho)* qnorm(x)-qnorm(pd))/sqrt(rho))
+        return(c)
 }
-area <- integrate(vfun,x[1],x[length(x)])$value
 
+#Portfolio loan loss x density
+portfolio_loss_density <- function(x,pd,rho){
+  d <- sqrt((1-rho)/rho)*exp( -1/(2*rho)*(sqrt(1-rho)*qnorm(x)-qnorm(pd))^2+0.5*qnorm(x)^2)
+  return(d)
+}
 
-#Putting results into a dataframe
-vas <- data.frame(x,x_norm,c,t)
+#Check the integral of the density between 0 and 1. Should be one
+area <- integrate(portfolio_loss_density,0.00001,0.99999,pd,rho)
+print(area)
 
-
-plot(x*length(x),t,type = 'l')
-u=pd*length(x)
-sdu = sqrt(pd*length(x)*(1-pd))
-
-n_data <-  dnorm(x*length(x),mean = u,sd=sdu)
-lines(x*length(x),n_data)
-plot(x*length(x),n_data,type='l')
-
-
-
+#Density of loan loss distribution
+t <- portfolio_loss_density(x,pd,rho)
 
 #Plot cummulative distribution
-plot(x,c,type = 'l',ylim = c(0,1))
-lines(x,p)
-n_data <-  pnorm(x*length(x),mean = u,sd=sdu)
-lines(x,n_data,col='red')
+plot(x,c,type ='l')
+
+#Plot density
+plot(x,t,type ='l')
+
+
+#Test 
+#X_i = Sqrt(rho)*S
+n = 4000
+
+port_loss_model <- function(n,rho,pd){
+  loss_lim <- qnorm(pd)
+  systematic_factor <- rep(rnorm(1),n)
+  idiosyncratic_factor <- rnorm(n)  
+  firm_value <- sqrt(rho)*systematic_factor+sqrt(1-rho)*idiosyncratic_factor
+  X <- firm_value<loss_lim
+  port_loss = sum(X)/length(X)
+}
+
+number_of_years = 8000
+x_sim <- rep(0,number_of_years)
+for (i in seq(1,number_of_years)){
+  x_sim[i]=port_loss_model(n,rho,pd)
+}
+#hist(x_sim,xlab='x',xlim=c(0,median(t)) )
+hist(x_sim,xlab='x')
+par(new=T)
+plot(x,t,type='l',col='red',ylab='',xlab='', xaxt = "n",yaxt = "n")
+legend("topright",legend=c('Simulated loan loss','Teoretical loan loss'),
+       col = c("black", "red"), lty = c(1, 2))
+
+
 
 
 
